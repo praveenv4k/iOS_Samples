@@ -41,13 +41,13 @@
 - (void)configureView
 {
     // Update the user interface for the detail item.
-    if (self.detailItem &&
-        [self.detailItem isKindOfClass:[Person class]]) { NSString *name = [NSString stringWithFormat:@"%@ %@",
-                                                                            [self.detailItem firstName],
-                                                                            [self.detailItem lastName]];
+    if (self.detailItem && [self.detailItem isKindOfClass:[Person class]]){
+        NSString *name = [NSString stringWithFormat:@"%@ %@",[self.detailItem firstName],
+                                                            [self.detailItem lastName]];
         self.nameLabel.text = name;
         self.organizationLabel.text = [self.detailItem organization];
-        self.phoneNumberLabel.text = [self.detailItem phoneNumber]; }
+        self.phoneNumberLabel.text = [self.detailItem phoneNumber];
+    }
 }
 
 - (void)viewDidLoad
@@ -88,8 +88,12 @@
 
 - (IBAction)save:(UIStoryboardSegue *)segue {
     if ([[segue identifier] isEqualToString:@"saveInput"]) {
-        EditViewController *editController = [segue sourceViewController]; [self.detailItem setFirstName:editController.firstNameField.text]; [self.detailItem setLastName:editController.lastNameField.text];
-        [self.detailItem setPhoneNumber:editController.phoneNumberField.text]; [self.detailItem setOrganization:editController.organizationField.text]; [self configureView];
+        EditViewController *editController = [segue sourceViewController];
+        [self.detailItem setFirstName:editController.firstNameField.text];
+        [self.detailItem setLastName:editController.lastNameField.text];
+        [self.detailItem setPhoneNumber:editController.phoneNumberField.text];
+        [self.detailItem setOrganization:editController.organizationField.text];
+        [self configureView];
     } }
 - (IBAction)cancel:(UIStoryboardSegue *)segue {
     if ([[segue identifier] isEqualToString:@"cancelInput"]) {

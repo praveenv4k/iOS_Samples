@@ -9,5 +9,8 @@
 #import <UIKit/UIKit.h>
 
 @interface AddViewController : UITableViewController<UITextFieldDelegate>
-
+@property (weak, nonatomic) IBOutlet UITextField *firstNameField;
+@property (weak, nonatomic) IBOutlet UITextField *lastNameField;
+@property (weak, nonatomic) IBOutlet UITextField *organizationField;
+@property (weak, nonatomic) IBOutlet UITextField *phoneNumberField;
 @end

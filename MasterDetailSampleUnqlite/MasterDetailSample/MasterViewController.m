@@ -8,6 +8,7 @@
 
 #import "MasterViewController.h"
 
+#import "AddViewController.h"
 #import "DetailViewController.h"
 #import "Person.h"
 
@@ -53,21 +54,6 @@
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
     [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
 }
-
-//- (void)insertNewObject:(id)sender
-//{
-//    if (!_objects) {
-//        _objects = [[NSMutableArray alloc] init];
-//    }
-//    Person* friend = [[Person alloc]init];
-//    friend.firstName = @"<First Name>";
-//    friend.lastName = @"<Last Name>";
-//    friend.organization = @"<Organization>";
-//    friend.phoneNumber = @"<Phone Number>";
-//    [_objects insertObject:friend atIndex:0];
-//    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-//    [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-//}
 
 #pragma mark - Table View
 
@@ -136,6 +122,8 @@
         NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
         Person *person = _objects[indexPath.row];
         [[segue destinationViewController] setDetailItem:person];
+    }else if([[segue identifier] isEqualToString:@"addDetail"]){
+        NSLog(@"Add Detail Segue");
     }
 }
 
@@ -145,10 +133,35 @@
     [view reloadData];
 }
 
+- (void)insertNewPerson:(NSString*)firstName withLastName:(NSString*)lastName worksAt:(NSString*)organization contact:(NSString*)phoneNumber {
+    if (!_objects) {
+        _objects = [[NSMutableArray alloc] init];
+    }
+    Person* friend = [[Person alloc]init];
+    friend.firstName = firstName;
+    friend.lastName = lastName;
+    friend.organization = organization;
+    friend.phoneNumber = phoneNumber;
+    [_objects insertObject:friend atIndex:0];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+}
+
 - (IBAction)save:(UIStoryboardSegue *)segue {
     if ([[segue identifier] isEqualToString:@"saveAddedItem"]) {
+        AddViewController *addController = [segue sourceViewController];
+        NSString* firstName = addController.firstNameField.text;
+        NSString* lastName = addController.lastNameField.text;
+        if([firstName length] != 0 &&
+           [lastName length] != 0){
+            NSString* organization = addController.organizationField.text;
+            NSString* phoneNumber = addController.phoneNumberField.text;
+            [self insertNewPerson:firstName
+                 withLastName:lastName worksAt:organization contact:phoneNumber];
+        }
         NSLog(@"Save Added Item");
-    } }
+    }
+}
 
 - (IBAction)cancel:(UIStoryboardSegue *)segue {
     if ([[segue identifier] isEqualToString:@"cancelAddedItem"]) {

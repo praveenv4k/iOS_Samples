@@ -514,6 +514,12 @@
                             </connections>
                         </barButtonItem>
                     </navigationItem>
+                    <connections>
+                        <outlet property="firstNameField" destination="DXw-0D-Pie" id="meP-un-M0B"/>
+                        <outlet property="lastNameField" destination="5Sh-7g-mmE" id="hU8-RM-Mm0"/>
+                        <outlet property="organizationField" destination="6u7-Wk-P6d" id="5hM-XZ-nx4"/>
+                        <outlet property="phoneNumberField" destination="XDp-AY-qx8" id="gw3-1C-ylM"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="jHE-qY-gC6" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <exit id="u6q-hq-bnN" userLabel="Exit" sceneMemberID="exit"/>
@@ -575,6 +581,12 @@
     <classes>
         <class className="AddViewController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/AddViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="firstNameField" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="lastNameField" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="organizationField" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="phoneNumberField" candidateClass="UITextField"/>
+            </relationships>
         </class>
         <class className="DetailViewController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/DetailViewController.h"/>
@@ -598,7 +610,9 @@
         <class className="MasterViewController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/MasterViewController.h"/>
             <relationships>
+                <relationship kind="action" name="cancel:" candidateClass="UIStoryboardSegue"/>
                 <relationship kind="action" name="insertNewPerson:"/>
+                <relationship kind="action" name="save:" candidateClass="UIStoryboardSegue"/>
             </relationships>
         </class>
         <class className="NSLayoutConstraint" superclassName="NSObject">
