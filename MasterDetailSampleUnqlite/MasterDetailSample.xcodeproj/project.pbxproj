@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5B53D2A0178C444B00C36782 /* AddViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5B53D29F178C444B00C36782 /* AddViewController.m */; };
 		5B745D3F177DC2E000142409 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B745D3E177DC2E000142409 /* UIKit.framework */; };
 		5B745D41177DC2E000142409 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B745D40177DC2E000142409 /* Foundation.framework */; };
 		5B745D43177DC2E000142409 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B745D42177DC2E000142409 /* CoreGraphics.framework */; };
@@ -25,6 +26,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5B53D29E178C444B00C36782 /* AddViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AddViewController.h; sourceTree = "<group>"; };
+		5B53D29F178C444B00C36782 /* AddViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AddViewController.m; sourceTree = "<group>"; };
 		5B745D3B177DC2E000142409 /* MasterDetailSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MasterDetailSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B745D3E177DC2E000142409 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		5B745D40177DC2E000142409 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -101,9 +104,11 @@
 				5B745D5C177DC2E000142409 /* MasterViewController.h */,
 				5B745D5D177DC2E000142409 /* MasterViewController.m */,
 				5B745D5F177DC2E000142409 /* DetailViewController.h */,
+				5B745D60177DC2E000142409 /* DetailViewController.m */,
+				5B53D29E178C444B00C36782 /* AddViewController.h */,
+				5B53D29F178C444B00C36782 /* AddViewController.m */,
 				5BDE36141780264900E33BE8 /* EditViewController.h */,
 				5BDE36151780264900E33BE8 /* EditViewController.m */,
-				5B745D60177DC2E000142409 /* DetailViewController.m */,
 				5B745D45177DC2E000142409 /* Supporting Files */,
 				5B745D67177DC56A00142409 /* Person.h */,
 				5B745D68177DC56A00142409 /* Person.m */,
@@ -198,6 +203,7 @@
 				5B745D61177DC2E000142409 /* DetailViewController.m in Sources */,
 				5B745D69177DC56A00142409 /* Person.m in Sources */,
 				5BDE36161780264900E33BE8 /* EditViewController.m in Sources */,
+				5B53D2A0178C444B00C36782 /* AddViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

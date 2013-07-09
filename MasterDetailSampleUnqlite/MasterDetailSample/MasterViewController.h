@@ -14,4 +14,7 @@
 
 @property (strong, nonatomic) DetailViewController *detailViewController;
 
+-(IBAction)cancel:(UIStoryboardSegue*)sender;
+-(IBAction)save:(UIStoryboardSegue*)sender;
+
 @end

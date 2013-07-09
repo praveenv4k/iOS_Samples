@@ -145,4 +145,14 @@
     [view reloadData];
 }
 
+- (IBAction)save:(UIStoryboardSegue *)segue {
+    if ([[segue identifier] isEqualToString:@"saveAddedItem"]) {
+        NSLog(@"Save Added Item");
+    } }
+
+- (IBAction)cancel:(UIStoryboardSegue *)segue {
+    if ([[segue identifier] isEqualToString:@"cancelAddedItem"]) {
+        NSLog(@"Cancel Added Item");
+    } }
+
 @end
