@@ -11,10 +11,15 @@
 #import "AddViewController.h"
 #import "DetailViewController.h"
 #import "Person.h"
+#import "unqlite.h"
 
 @interface MasterViewController () {
     NSMutableArray *_objects;
+    NSString* _dbPath;
 }
+
+- (void) createDatabase:(NSString*)path;
+
 @end
 
 @implementation MasterViewController
@@ -34,6 +39,98 @@
 	// Do any additional setup after loading the view, typically from a nib.
     self.navigationItem.leftBarButtonItem = self.editButtonItem;
     self.detailViewController = (DetailViewController *)[[self.splitViewController.viewControllers lastObject] topViewController];
+    
+//    NSFileManager* sharedFM = [NSFileManager defaultManager];
+//    NSArray* paths = [sharedFM URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask];
+    NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    if([paths count] > 0){
+        NSString* docs_dir = [paths objectAtIndex:0];
+        _dbPath = [docs_dir stringByAppendingPathComponent:@"Person.db"];
+        NSLog(@"%@",_dbPath);
+        NSFileManager* sharedFM = [NSFileManager defaultManager];
+        if([sharedFM fileExistsAtPath:_dbPath]){
+            NSLog(@"%@",@"Person db Exists");
+            
+        }
+        else{
+            [self createDatabase:_dbPath];
+        }
+    }
+}
+
+-(void)createDatabase:(NSString *)path{
+    if(path != nil){
+        int rc;
+        unqlite* pDb;
+        
+        rc = unqlite_open(&pDb, [path cStringUsingEncoding:NSASCIIStringEncoding],UNQLITE_OPEN_CREATE);
+        
+        if(rc != UNQLITE_OK){
+            NSLog(@"%@",@"Error Creating/Opening Person Database");
+        }
+//        unqlite_close(pDb);
+        
+        // Store some records
+        rc = unqlite_kv_store(pDb,"test",-1,"Hello World",11); //test => 'Hello World'
+        if( rc != UNQLITE_OK ){
+            //Insertion fail, Hande error (See below)
+            return;
+        }
+        // A small formatted string
+        rc = unqlite_kv_store_fmt(pDb,"date",-1,"Current date: %d:%d:%d",2013,06,07);
+        if( rc != UNQLITE_OK ){
+            //Insertion fail, Hande error (See below)
+            return;
+        }
+        
+        //Switch to the append interface
+        rc = unqlite_kv_append(pDb,"msg",-1,"Hello, ",7); //msg => 'Hello, '
+        if( rc == UNQLITE_OK ){
+            //The second chunk
+            rc = unqlite_kv_append(pDb,"msg",-1,"Current time is: ",17); //msg => 'Hello, Current time is: '
+            if( rc == UNQLITE_OK ){
+                //The last formatted chunk
+                rc = unqlite_kv_append_fmt(pDb,"msg",-1,"%d:%d:%d",10,16,53); //msg => 'Hello, Current time is: 10:16:53'
+            }
+        }
+        
+        //Delete a record
+        unqlite_kv_delete(pDb,"test",-1);
+        
+        //Store 20 random records.
+        for(int i = 0 ; i < 20 ; ++i ){
+            char zKey[12]; //Random generated key
+            char zData[34]; //Dummy data
+            
+            // generate the random key
+            unqlite_util_random_string(pDb,zKey,sizeof(zKey));
+            
+            // Perform the insertion
+            rc = unqlite_kv_store(pDb,zKey,sizeof(zKey),zData,sizeof(zData));
+            if( rc != UNQLITE_OK ){
+                break;
+            }
+        }
+        
+        if( rc != UNQLITE_OK ){
+            //Insertion fail, Handle error
+            const char *zBuf;
+            int iLen;
+            /* Something goes wrong, extract the database error log */
+            unqlite_config(pDb,UNQLITE_CONFIG_ERR_LOG,&zBuf,&iLen);
+            if( iLen > 0 ){
+                puts(zBuf);
+            }
+            if( rc != UNQLITE_BUSY && rc != UNQLITE_NOTIMPLEMENTED ){
+                /* Rollback */
+                unqlite_rollback(pDb);
+            }
+        }
+        
+        //Auto-commit the transaction and close our handle.
+        unqlite_close(pDb);
+
+    }
 }
 
 - (void)didReceiveMemoryWarning

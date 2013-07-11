@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5B226CF0178D968F00F48E8A /* unqlite.c in Sources */ = {isa = PBXBuildFile; fileRef = 5B226CED178D8D5200F48E8A /* unqlite.c */; };
 		5B53D2A0178C444B00C36782 /* AddViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5B53D29F178C444B00C36782 /* AddViewController.m */; };
 		5B745D3F177DC2E000142409 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B745D3E177DC2E000142409 /* UIKit.framework */; };
 		5B745D41177DC2E000142409 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B745D40177DC2E000142409 /* Foundation.framework */; };
@@ -26,6 +27,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5B226CEC178D8D5200F48E8A /* license.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = license.txt; sourceTree = "<group>"; };
+		5B226CED178D8D5200F48E8A /* unqlite.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = unqlite.c; sourceTree = "<group>"; };
+		5B226CEE178D8D5200F48E8A /* unqlite.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = unqlite.h; sourceTree = "<group>"; };
 		5B53D29E178C444B00C36782 /* AddViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AddViewController.h; sourceTree = "<group>"; };
 		5B53D29F178C444B00C36782 /* AddViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AddViewController.m; sourceTree = "<group>"; };
 		5B745D3B177DC2E000142409 /* MasterDetailSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MasterDetailSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -67,6 +71,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5B226CEB178D8D2E00F48E8A /* unqlite-db */ = {
+			isa = PBXGroup;
+			children = (
+				5B226CEC178D8D5200F48E8A /* license.txt */,
+				5B226CED178D8D5200F48E8A /* unqlite.c */,
+				5B226CEE178D8D5200F48E8A /* unqlite.h */,
+			);
+			name = "unqlite-db";
+			sourceTree = "<group>";
+		};
 		5B745D32177DC2E000142409 = {
 			isa = PBXGroup;
 			children = (
@@ -97,6 +111,7 @@
 		5B745D44177DC2E000142409 /* MasterDetailSample */ = {
 			isa = PBXGroup;
 			children = (
+				5B226CEB178D8D2E00F48E8A /* unqlite-db */,
 				5B745D4D177DC2E000142409 /* AppDelegate.h */,
 				5B745D4E177DC2E000142409 /* AppDelegate.m */,
 				5B745D56177DC2E000142409 /* MainStoryboard_iPhone.storyboard */,
@@ -197,6 +212,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B226CF0178D968F00F48E8A /* unqlite.c in Sources */,
 				5B745D4B177DC2E000142409 /* main.m in Sources */,
 				5B745D4F177DC2E000142409 /* AppDelegate.m in Sources */,
 				5B745D5E177DC2E000142409 /* MasterViewController.m in Sources */,
