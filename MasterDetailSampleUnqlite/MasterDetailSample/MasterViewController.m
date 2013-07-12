@@ -19,6 +19,7 @@
 }
 
 - (void) createDatabase:(NSString*)path;
+-(int) insertPersonIntoDb:(Person *)person intoDbAtPath:(NSString*)dbPath;
 
 @end
 
@@ -181,6 +182,44 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
 "        'date' : Hello  /*Current date*/"\
 " }];"
 
+
+#define JX9_PROG_PERSONDB \
+" $zCol = 'persons'; /* Target collection name */"\
+" /* Check if the collection 'persons' exists */"\
+" if( db_exists($zCol) ){"\
+"    print \"Collection persons already created\n\";"\
+" }else{"\
+"    /* Try to create it */"\
+"    $rc = db_create($zCol);"\
+"    if ( !$rc ){"\
+"        return;"\
+"    }"\
+"    print \"Collection persons successfully created\n\";"\
+"    $zSchema =  {"\
+"       firstName : 'string',"\
+"       lastName  : 'string',"\
+"       phone : 'string',"\
+"       organization : 'string'"\
+"    };"\
+"    db_set_schema($zCol,$zSchema);"\
+" }"\
+" /*JSON object foreign variable named $new_person*/"\
+" print \"\n\\$new_person = \",$new_person..JX9_EOL;"\
+" $rc = db_store($zCol,$new_person);"\
+" if( !$rc ){"\
+"    print db_errlog();"\
+"    return;"\
+" }"\
+" $recCount = db_total_records($zCol);"\
+" print \"\nTotal Records in Persons Db:\n\";"\
+" print $recCount..JX9_EOL;"\
+" $zCallback = function($rec){"\
+"     return TRUE;"\
+" };"\
+" $dbRecords = db_fetch_all($zCol,$zCallback);"\
+" print $dbRecords;"
+
+
 int testJx9()
 {
 	unqlite_value *pScalar,*pObject; /* Foreign Jx9 variable to be installed later */
@@ -318,6 +357,131 @@ int testJx9()
 	unqlite_close(pDb);
 	return 0;
 }
+
+-(int) insertPersonIntoDb:(Person *)person intoDbAtPath:(NSString*)dbPath
+{
+    if(person == nil || dbPath==nil){
+        return -1;
+    }
+	unqlite_value *pScalar,*pObject; /* Foreign Jx9 variable to be installed later */
+	unqlite *pDb;       /* Database handle */
+	unqlite_vm *pVm;    /* UnQLite VM resulting from successful compilation of the target Jx9 script */
+	int rc;
+    
+	puts(zBanner);
+    
+	/* Open our database */
+	rc = unqlite_open(&pDb,[dbPath cStringUsingEncoding:NSASCIIStringEncoding],UNQLITE_OPEN_CREATE);
+	if( rc != UNQLITE_OK ){
+		Fatal(0,"Out of memory");
+	}
+	
+	/* Compile our Jx9 script defined above */
+	rc = unqlite_compile(pDb,JX9_PROG_PERSONDB,sizeof(JX9_PROG_PERSONDB)-1,&pVm);
+	if( rc != UNQLITE_OK ){
+		/* Compile error, extract the compiler error log */
+		const char *zBuf;
+		int iLen;
+		/* Extract error log */
+		unqlite_config(pDb,UNQLITE_CONFIG_JX9_ERR_LOG,&zBuf,&iLen);
+		if( iLen > 0 ){
+			puts(zBuf);
+		}
+		Fatal(0,"Jx9 compile error");
+	}
+    
+	/* Install a VM output consumer callback */
+	rc = unqlite_vm_config(pVm,UNQLITE_VM_CONFIG_OUTPUT,VmOutputConsumer,0);
+	if( rc != UNQLITE_OK ){
+		Fatal(pDb,0);
+	}
+	
+	/*
+	 * Create a simple scalar variable.
+	 */
+	pScalar = unqlite_vm_new_scalar(pVm);
+	if( pScalar == 0 ){
+		Fatal(0,"Cannot create foreign variable $my_app");
+	}
+	
+	/*
+	 * Now, it's time to create and install a more complex variable which is a JSON
+	 * object named $my_data.
+	 * The JSON Object looks like this:
+	 *  {
+	 *     "path" : "/usr/local/etc",
+	 *     "port" : 8082,
+	 *     "fork" : true
+	 *  };
+	 */
+	pObject = unqlite_vm_new_array(pVm); /* Unified interface for JSON Objects and Arrays */
+	/* Populate the object with the fields defined above.
+     */
+	unqlite_value_reset_string_cursor(pScalar);
+	
+	/* Add the "firstName" */
+	unqlite_value_string(pScalar,[person.firstName cStringUsingEncoding:NSASCIIStringEncoding],-1);
+	unqlite_array_add_strkey_elem(pObject,"firstName",pScalar); /* Will make it's own copy of pScalar */
+    
+    unqlite_value_reset_string_cursor(pScalar);
+    
+    /* Add the "lastName" */
+	unqlite_value_string(pScalar,[person.lastName cStringUsingEncoding:NSASCIIStringEncoding],-1);
+	unqlite_array_add_strkey_elem(pObject,"lastName",pScalar); /* Will make it's own copy of pScalar */
+    
+    unqlite_value_reset_string_cursor(pScalar);
+    
+    /* Add the "phone" */
+	unqlite_value_string(pScalar,[person.phoneNumber cStringUsingEncoding:NSASCIIStringEncoding],-1);
+	unqlite_array_add_strkey_elem(pObject,"phone",pScalar); /* Will make it's own copy of pScalar */
+    
+    unqlite_value_reset_string_cursor(pScalar);
+    
+    /* Add the "organization" */
+	unqlite_value_string(pScalar,[person.organization cStringUsingEncoding:NSASCIIStringEncoding],-1);
+	unqlite_array_add_strkey_elem(pObject,"organization",pScalar); /* Will make it's own copy of pScalar */
+	
+	/* Now, install the variable and associate the JSON object with it */
+	rc = unqlite_vm_config(
+                           pVm,
+                           UNQLITE_VM_CONFIG_CREATE_VAR, /* Create variable command */
+                           "new_person", /* Variable name (without the dollar sign) */
+                           pObject    /*value */
+                           );
+	if( rc != UNQLITE_OK ){
+		Fatal(0,"Error while installing $new_person");
+	}
+    
+	/* Release the two values */
+	unqlite_vm_release_value(pVm,pScalar);
+	unqlite_vm_release_value(pVm,pObject);
+    
+	/* Execute our script */
+	unqlite_vm_exec(pVm);
+	
+	/* Extract the content of the variable named $my_config defined in the
+	 * running script which hold a simple JSON object.
+	 */
+	pObject = unqlite_vm_extract_variable(pVm,"dbRecords");
+	if( pObject && unqlite_value_is_json_object(pObject) ){
+		/* Iterate over object fields */
+		printf("\n\nTotal fields in $dbRecords = %u\n",unqlite_array_count(pObject));
+		unqlite_array_walk(pObject,JsonObjectWalker,0);
+	}
+    else if(pObject && unqlite_value_is_json_array(pObject)){
+        /* Iterate over object fields */
+		printf("\n\nTotal fields in $dbRecords = %u\n",unqlite_array_count(pObject));
+        unqlite_array_walk(pObject, JsonArrayWalker, 0);
+    }
+    
+	/* Release our VM */
+	unqlite_vm_release(pVm);
+	
+	/* Auto-commit the transaction and close our database */
+	unqlite_close(pDb);
+	return 0;
+}
+
 
 #ifdef __WINNT__
 #include <Windows.h>
@@ -583,6 +747,8 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
     [_objects insertObject:friend atIndex:0];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
     [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+    
+    [self insertPersonIntoDb:friend intoDbAtPath:_dbPath];
 }
 
 - (IBAction)save:(UIStoryboardSegue *)segue {
