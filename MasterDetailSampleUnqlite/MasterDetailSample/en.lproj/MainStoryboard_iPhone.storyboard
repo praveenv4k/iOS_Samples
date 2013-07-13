@@ -377,7 +377,7 @@
                                                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                     <textInputTraits key="textInputTraits" autocapitalizationType="words"/>
                                                     <connections>
-                                                        <outlet property="delegate" destination="749-dC-QtQ" id="kRG-uZ-Xxs"/>
+                                                        <outlet property="delegate" destination="bqd-nb-DRI" id="M3T-tw-GVC"/>
                                                     </connections>
                                                 </textField>
                                             </subviews>
@@ -413,7 +413,7 @@
                                                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                     <textInputTraits key="textInputTraits" autocapitalizationType="words"/>
                                                     <connections>
-                                                        <outlet property="delegate" destination="749-dC-QtQ" id="JwR-VF-crw"/>
+                                                        <outlet property="delegate" destination="bqd-nb-DRI" id="m0A-TH-ba2"/>
                                                     </connections>
                                                 </textField>
                                             </subviews>
@@ -449,7 +449,7 @@
                                                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                     <textInputTraits key="textInputTraits" autocapitalizationType="words"/>
                                                     <connections>
-                                                        <outlet property="delegate" destination="749-dC-QtQ" id="lfw-0c-dar"/>
+                                                        <outlet property="delegate" destination="bqd-nb-DRI" id="T7Q-kR-STg"/>
                                                     </connections>
                                                 </textField>
                                             </subviews>
@@ -485,7 +485,7 @@
                                                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                     <textInputTraits key="textInputTraits" autocapitalizationType="words" keyboardType="numberPad"/>
                                                     <connections>
-                                                        <outlet property="delegate" destination="749-dC-QtQ" id="MeB-m7-c91"/>
+                                                        <outlet property="delegate" destination="bqd-nb-DRI" id="mPH-l0-NvB"/>
                                                     </connections>
                                                 </textField>
                                             </subviews>

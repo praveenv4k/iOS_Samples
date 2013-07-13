@@ -20,7 +20,7 @@
 
 - (void) createDatabase:(NSString*)path;
 -(int) insertPersonIntoDb:(Person *)person intoDbAtPath:(NSString*)dbPath;
-
+-(int) fetchAllPersonsFromDb:(NSString*)dbPath;
 @end
 
 @implementation MasterViewController
@@ -109,16 +109,36 @@ static int JsonArrayWalker(unqlite_value *pKey,unqlite_value *pData,void *pUserD
             }
         }
     }
-//	/* Extract the key and the data field */
-//	zKey = unqlite_value_to_string(pKey,0);
-//	zData = unqlite_value_to_string(pData,0);
-//	/* Dump */
-//	NSLog(@"%@ ===> %@",
-//          [NSString stringWithUTF8String:zKey],
-//          [NSString stringWithUTF8String:zData]
-//          );
 	return UNQLITE_OK;
 }
+
+static int JsonPersonArrayWalker(unqlite_value *pKey,unqlite_value *pData,void *pUserData /* Unused */)
+{
+    unqlite_value* value1 = unqlite_array_fetch(pData, "firstName", -1);
+    if(value1!= 0){
+        unqlite_value* value2 = unqlite_array_fetch(pData, "lastName", -1);
+        if(value2!=0){
+            unqlite_value* value3 = unqlite_array_fetch(pData, "phone", -1);
+            if(value3!=0){
+                unqlite_value* value4 = unqlite_array_fetch(pData, "organization", -1);
+                if(value4!=0){
+                    unqlite_value* value5 = unqlite_array_fetch(pData, "__id", -1);
+                    if(value5!=0){
+                        const char *zData1 = unqlite_value_to_string(value1,0);
+                        const char *zData2 = unqlite_value_to_string(value2,0);
+                        const char *zData3 = unqlite_value_to_string(value3,0);
+                        const char *zData4 = unqlite_value_to_string(value4,0);
+                        int personId  = unqlite_value_to_int64(value5);
+                        
+                        printf("%s %s;%s,%s,%d\n",zData1,zData2,zData3,zData4,personId);
+                    }
+                }
+            }
+        }
+    }
+	return UNQLITE_OK;
+}
+
 
 /* Forward declaration: VM output consumer callback */
 static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUserData /* Unused */);
@@ -183,7 +203,7 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
 " }];"
 
 
-#define JX9_PROG_PERSONDB \
+#define JX9_PROG_ADDPERSON_FETCHDB \
 " $zCol = 'persons'; /* Target collection name */"\
 " /* Check if the collection 'persons' exists */"\
 " if( db_exists($zCol) ){"\
@@ -219,6 +239,41 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
 " $dbRecords = db_fetch_all($zCol,$zCallback);"\
 " print $dbRecords;"
 
+#define JX9_PROG_FETCHPERSONDB \
+" $zCol = 'persons'; /* Target collection name */"\
+" /* Check if the collection 'persons' exists */"\
+" if( db_exists($zCol) ){"\
+" }else{"\
+"        return;"\
+" }"\
+" $zCallback = function($rec){"\
+"     return TRUE;"\
+" };"\
+" $dbRecords = db_fetch_all($zCol,$zCallback);"\
+" print $dbRecords;"
+
+#define JX9_PROG_UPDATEPERSONDB \
+" $zCol = 'persons'; /* Target collection name */"\
+" /* Check if the collection 'persons' exists */"\
+" if( db_exists($zCol) ){"\
+" }else{"\
+"        return;"\
+" }"\
+" /*JSON object foreign variable named $edit_person*/"\
+" print \"\n\\$edit_person = \",$edit_person..JX9_EOL;"\
+" $rc = db_store($zCol,$edit_person);"\
+" if( !$rc ){"\
+"    print db_errlog();"\
+"    return;"\
+" }"\
+" $recCount = db_total_records($zCol);"\
+" print \"\nTotal Records in Persons Db:\n\";"\
+" print $recCount..JX9_EOL;"\
+" $zCallback = function($rec){"\
+"     return TRUE;"\
+" };"\
+" $dbRecords = db_fetch_all($zCol,$zCallback);"\
+" print $dbRecords;"
 
 int testJx9()
 {
@@ -377,7 +432,7 @@ int testJx9()
 	}
 	
 	/* Compile our Jx9 script defined above */
-	rc = unqlite_compile(pDb,JX9_PROG_PERSONDB,sizeof(JX9_PROG_PERSONDB)-1,&pVm);
+	rc = unqlite_compile(pDb,JX9_PROG_ADDPERSON_FETCHDB,sizeof(JX9_PROG_ADDPERSON_FETCHDB)-1,&pVm);
 	if( rc != UNQLITE_OK ){
 		/* Compile error, extract the compiler error log */
 		const char *zBuf;
@@ -482,6 +537,71 @@ int testJx9()
 	return 0;
 }
 
+-(int) fetchAllPersonsFromDb:(NSString*)dbPath
+{
+    if(dbPath==nil){
+        return -1;
+    }
+	unqlite_value *pObject; /* Foreign Jx9 variable to be installed later */
+	unqlite *pDb;       /* Database handle */
+	unqlite_vm *pVm;    /* UnQLite VM resulting from successful compilation of the target Jx9 script */
+	int rc;
+    
+	puts(zBanner);
+    
+	/* Open our database */
+	rc = unqlite_open(&pDb,[dbPath cStringUsingEncoding:NSASCIIStringEncoding],UNQLITE_OPEN_CREATE);
+	if( rc != UNQLITE_OK ){
+		Fatal(0,"Out of memory");
+	}
+	
+	/* Compile our Jx9 script defined above */
+	rc = unqlite_compile(pDb,JX9_PROG_FETCHPERSONDB,sizeof(JX9_PROG_FETCHPERSONDB)-1,&pVm);
+	if( rc != UNQLITE_OK ){
+		/* Compile error, extract the compiler error log */
+		const char *zBuf;
+		int iLen;
+		/* Extract error log */
+		unqlite_config(pDb,UNQLITE_CONFIG_JX9_ERR_LOG,&zBuf,&iLen);
+		if( iLen > 0 ){
+			puts(zBuf);
+		}
+		Fatal(0,"Jx9 compile error");
+	}
+    
+	/* Install a VM output consumer callback */
+	rc = unqlite_vm_config(pVm,UNQLITE_VM_CONFIG_OUTPUT,VmOutputConsumer,0);
+	if( rc != UNQLITE_OK ){
+		Fatal(pDb,0);
+	}
+	   
+	/* Execute our script */
+	unqlite_vm_exec(pVm);
+	
+	/* Extract the content of the variable named $my_config defined in the
+	 * running script which hold a simple JSON object.
+	 */
+	pObject = unqlite_vm_extract_variable(pVm,"dbRecords");
+	if( pObject && unqlite_value_is_json_object(pObject) ){
+		/* Iterate over object fields */
+		printf("\n\nTotal fields in $dbRecords = %u\n",unqlite_array_count(pObject));
+		unqlite_array_walk(pObject,JsonObjectWalker,0);
+	}
+    else if(pObject && unqlite_value_is_json_array(pObject)){
+        /* Iterate over object fields */
+        [_objects removeAllObjects];
+		printf("\n\nTotal fields in $dbRecords = %u\n",unqlite_array_count(pObject));
+        unqlite_array_walk(pObject, JsonPersonArrayWalker,0);
+    }
+    
+	/* Release our VM */
+	unqlite_vm_release(pVm);
+	
+	/* Auto-commit the transaction and close our database */
+	unqlite_close(pDb);
+	return 0;
+}
+
 
 #ifdef __WINNT__
 #include <Windows.h>
@@ -559,7 +679,8 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
         else{
             [self createDatabase:_dbPath];
         }
-        testJx9();
+        [self fetchAllPersonsFromDb:_dbPath];
+        //testJx9();
     }
 }
 
@@ -693,22 +814,6 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
         // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view.
     }
 }
-
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
-{
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {

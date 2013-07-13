@@ -10,6 +10,7 @@
 
 @implementation Person
 
+@synthesize personId=_personId;
 @synthesize firstName=_firstName;
 @synthesize lastName=_lastName;
 @synthesize organization=_organization;
