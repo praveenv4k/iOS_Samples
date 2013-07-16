@@ -91,7 +91,12 @@
 "     return TRUE;"\
 " };"\
 " $dbRecords = db_fetch_all($zCol,$zCallback);"\
-" print $dbRecords;"
+" print $dbRecords;"\
+" foreach ($dbRecords as $value)"\
+" fillObjects($value);"
+
+//" dump(fillObjects($value));"
+
 
 #define JX9_PROG_UPDATEPERSONDB \
 " $zCol = 'persons'; /* Target collection name */"\
@@ -129,7 +134,7 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
 - (void) createDatabase:(NSString*)path;
 -(int) insertPersonIntoDb:(Person *)person intoDbAtPath:(NSString*)dbPath;
 -(int) fetchAllPersonsFromDb:(NSString*)dbPath;
-static Person* PersonFromDbObject(unqlite_value* dbObject);
+static Person* personFromDbObject(unqlite_value* dbObject);
 @end
 
 @implementation MasterViewController
@@ -236,7 +241,7 @@ static int JsonPersonArrayWalker(unqlite_value *pKey,unqlite_value *pData,void *
                         const char *zData4 = unqlite_value_to_string(value4,0);
                         int personId  = unqlite_value_to_int64(value5);
                         
-                        printf("%s %s;%s,%s,%d\n",zData1,zData2,zData3,zData4,personId);
+                        //printf("%s %s;%s,%s,%d\n",zData1,zData2,zData3,zData4,personId);
                     }
                 }
             }
@@ -349,7 +354,7 @@ static int JsonPersonArrayWalker(unqlite_value *pKey,unqlite_value *pData,void *
 	 */
 	pObject = unqlite_vm_extract_variable(pVm,"dbRecords");
 	if( pObject && unqlite_value_is_json_object(pObject) ){
-        Person* addPerson = PersonFromDbObject(pObject);
+        Person* addPerson = personFromDbObject(pObject);
         if(addPerson!=nil){
             if(_objects!= nil){
                 [_objects insertObject:addPerson atIndex:0];
@@ -370,7 +375,7 @@ static int JsonPersonArrayWalker(unqlite_value *pKey,unqlite_value *pData,void *
 	return 0;
 }
 
-static Person* PersonFromDbObject(unqlite_value* pObject){
+static Person* personFromDbObject(unqlite_value* pObject){
     if( pObject && unqlite_value_is_json_object(pObject) ){
         unqlite_value* value = unqlite_array_fetch(pObject, "firstName", -1);
         if(value != NULL){
@@ -401,6 +406,21 @@ static Person* PersonFromDbObject(unqlite_value* pObject){
         }
     }
     return nil;
+}
+
+int fillObjects(unqlite_context *pCtx, int argc, unqlite_value **argv)
+{
+    //printf("Number of Arguments : %d",argc);
+    if (argc>0) {
+        unqlite_value* value = argv[0];
+        if(value!=0){
+            Person* person = personFromDbObject(value);
+            if(person!=nil){
+                NSLog(@"%@ %@",person.firstName,person.lastName);
+            }
+        }
+    }
+    return UNQLITE_OK;
 }
 
 -(int) fetchAllPersonsFromDb:(NSString*)dbPath
@@ -438,7 +458,13 @@ static Person* PersonFromDbObject(unqlite_value* pObject){
 	if( rc != UNQLITE_OK ){
 		Fatal(pDb,0);
 	}
-	   
+    
+    rc = unqlite_create_function(pVm
+                                 , "fillObjects", fillObjects, 0);
+	if( rc != UNQLITE_OK ){
+		Fatal(pDb,0);
+	}
+    
 	/* Execute our script */
 	unqlite_vm_exec(pVm);
 	
