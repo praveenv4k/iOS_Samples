@@ -12,114 +12,8 @@
 #import "DetailViewController.h"
 #import "Person.h"
 #import "unqlite.h"
-
-#define JX9_PROG \
-"print \"Showing foreign variables contents\n\n\";"\
-" /*Scalar foreign variable named $my_app*/"\
-" print \"\\$my_app = \",$my_app..JX9_EOL;"\
-" /*JSON object foreign variable named $my_data*/"\
-" print \"\n\\$my_data = \",$my_data..JX9_EOL;"\
-" /*Dump command line arguments*/"\
-" if( count($argv) > 0 ){"\
-"  print \"\nCommand line arguments:\n\";"\
-"  print $argv..JX9_EOL;"\
-" }else{"\
-"  print \"\nEmpty command line\";"\
-" }"\
-" /*Return a simple JSON object to the host application*/"\
-" $my_config = ["\
-" {"\
-"        'unqlite_signature' : db_sig(),  /* UnQLite Unique version*/"\
-"        'time' : __TIME__, /*Current time*/"\
-"        'date' : __DATE__  /*Current date*/"\
-" },{"\
-"        'unqlite_signature' : db_sig(),  /* UnQLite Unique version*/"\
-"        'time' : __TIME__, /*Current time*/"\
-"        'date' : __DATE__  /*Current date*/"\
-" },{"\
-"        'unqlite_signature' : db_sig(),  /* UnQLite Unique version*/"\
-"        'time' : __TIME__, /*Current time*/"\
-"        'date' : Hello  /*Current date*/"\
-" }];"
-
-
-#define JX9_PROG_ADDPERSON_FETCHDB \
-" $zCol = 'persons'; /* Target collection name */"\
-" /* Check if the collection 'persons' exists */"\
-" if( db_exists($zCol) ){"\
-"    print \"Collection persons already created\n\";"\
-" }else{"\
-"    /* Try to create it */"\
-"    $rc = db_create($zCol);"\
-"    if ( !$rc ){"\
-"        return;"\
-"    }"\
-"    print \"Collection persons successfully created\n\";"\
-"    $zSchema =  {"\
-"       firstName : 'string',"\
-"       lastName  : 'string',"\
-"       phone : 'string',"\
-"       organization : 'string'"\
-"    };"\
-"    db_set_schema($zCol,$zSchema);"\
-" }"\
-" /*JSON object foreign variable named $new_person*/"\
-" print \"\n\\$new_person = \",$new_person..JX9_EOL;"\
-" $rc = db_store($zCol,$new_person);"\
-" if( !$rc ){"\
-"    print db_errlog();"\
-"    return;"\
-" }"\
-" $recCount = db_total_records($zCol);"\
-" print \"\nTotal Records in Persons Db:\n\";"\
-" print $recCount..JX9_EOL;"\
-" $zCallback = function($rec){"\
-"     return TRUE;"\
-" };"\
-" $lastId = db_last_record_id($zCol);"\
-" $dbRecords = db_fetch_by_id($zCol,$lastId);"\
-" print $dbRecords;"
-
-#define JX9_PROG_FETCHPERSONDB \
-" $zCol = 'persons'; /* Target collection name */"\
-" /* Check if the collection 'persons' exists */"\
-" if( db_exists($zCol) ){"\
-" }else{"\
-"        return;"\
-" }"\
-" $zCallback = function($rec){"\
-"     return TRUE;"\
-" };"\
-" $dbRecords = db_fetch_all($zCol,$zCallback);"\
-" print $dbRecords;"\
-" foreach ($dbRecords as $value)"\
-" fillObjects($value);"
-
-//" dump(fillObjects($value));"
-
-
-#define JX9_PROG_UPDATEPERSONDB \
-" $zCol = 'persons'; /* Target collection name */"\
-" /* Check if the collection 'persons' exists */"\
-" if( db_exists($zCol) ){"\
-" }else{"\
-"        return;"\
-" }"\
-" /*JSON object foreign variable named $edit_person*/"\
-" print \"\n\\$edit_person = \",$edit_person..JX9_EOL;"\
-" $rc = db_store($zCol,$edit_person);"\
-" if( !$rc ){"\
-"    print db_errlog();"\
-"    return;"\
-" }"\
-" $recCount = db_total_records($zCol);"\
-" print \"\nTotal Records in Persons Db:\n\";"\
-" print $recCount..JX9_EOL;"\
-" $zCallback = function($rec){"\
-"     return TRUE;"\
-" };"\
-" $dbRecords = db_fetch_all($zCol,$zCallback);"\
-" print $dbRecords;"
+#import <string.h>
+#import "Jx9Macros.h"
 
 
 /* Forward declaration: VM output consumer callback */
@@ -133,6 +27,7 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
 
 - (void) createDatabase:(NSString*)path;
 -(int) insertPersonIntoDb:(Person *)person intoDbAtPath:(NSString*)dbPath;
+-(int) dropPersonFromDb:(Person *)person fromDbAtPath:(NSString*)dbPath;
 -(int) fetchAllPersonsFromDb:(NSString*)dbPath;
 static Person* personFromDbObject(unqlite_value* dbObject);
 @end
@@ -186,66 +81,20 @@ static int JsonObjectWalker(unqlite_value *pKey,unqlite_value *pData,void *pUser
 
 static int JsonArrayWalker(unqlite_value *pKey,unqlite_value *pData,void *pUserData)
 {
-	unqlite_value* value1 = unqlite_array_fetch(pData, "firstName", -1);
-    if(value1!= 0){
-        unqlite_value* value2 = unqlite_array_fetch(pData, "lastName", -1);
-        if(value2!=0){
-            unqlite_value* value3 = unqlite_array_fetch(pData, "phone", -1);
-            if(value3!=0){
-                unqlite_value* value4 = unqlite_array_fetch(pData, "organization", -1);
-                if(value4!=0){
-                    unqlite_value* value5 = unqlite_array_fetch(pData, "__id", -1);
-                    if(value5!=0){
-                        const char *zData1 = unqlite_value_to_string(value1,0);
-                        const char *zData2 = unqlite_value_to_string(value2,0);
-                        const char *zData3 = unqlite_value_to_string(value3,0);
-                        const char *zData4 = unqlite_value_to_string(value4,0);
-                        int personId  = unqlite_value_to_int64(value5);
-                        
-                        Person* person = [[Person alloc]init];
-                        person.firstName = [NSString stringWithUTF8String:zData1];
-                        person.lastName = [NSString stringWithUTF8String:zData2];
-                        person.phoneNumber = [NSString stringWithUTF8String:zData3];
-                        person.organization = [NSString stringWithUTF8String:zData4];
-                        person.personId = personId;
-                        
-                        NSMutableArray* objects = (__bridge NSMutableArray*)pUserData;
-                        if(objects!=NULL){
-                            [objects insertObject:person atIndex:0];
-                        }
-                        
-                        printf("%s %s;%s,%s,%d\n",zData1,zData2,zData3,zData4,personId);
-                    }
-                }
-            }
-        }
+	Person* person = personFromDbObject(pData);
+    NSMutableArray* objects = (__bridge NSMutableArray*)pUserData;
+    if(objects!=NULL && person!=nil){
+        [objects insertObject:person atIndex:0];
     }
 	return UNQLITE_OK;
 }
 
 static int JsonPersonArrayWalker(unqlite_value *pKey,unqlite_value *pData,void *pUserData /* Unused */)
 {
-    unqlite_value* value1 = unqlite_array_fetch(pData, "firstName", -1);
-    if(value1!= 0){
-        unqlite_value* value2 = unqlite_array_fetch(pData, "lastName", -1);
-        if(value2!=0){
-            unqlite_value* value3 = unqlite_array_fetch(pData, "phone", -1);
-            if(value3!=0){
-                unqlite_value* value4 = unqlite_array_fetch(pData, "organization", -1);
-                if(value4!=0){
-                    unqlite_value* value5 = unqlite_array_fetch(pData, "__id", -1);
-                    if(value5!=0){
-                        const char *zData1 = unqlite_value_to_string(value1,0);
-                        const char *zData2 = unqlite_value_to_string(value2,0);
-                        const char *zData3 = unqlite_value_to_string(value3,0);
-                        const char *zData4 = unqlite_value_to_string(value4,0);
-                        int personId  = unqlite_value_to_int64(value5);
-                        
-                        //printf("%s %s;%s,%s,%d\n",zData1,zData2,zData3,zData4,personId);
-                    }
-                }
-            }
-        }
+    Person* person = personFromDbObject(pData);
+    NSMutableArray* objects =  (__bridge NSMutableArray*)(pUserData);
+    if(objects!=NULL && person!=nil){
+        [objects insertObject:person atIndex:0];
     }
 	return UNQLITE_OK;
 }
@@ -364,8 +213,110 @@ static int JsonPersonArrayWalker(unqlite_value *pKey,unqlite_value *pData,void *
     else if(pObject && unqlite_value_is_json_array(pObject)){
         /* Iterate over object fields */
 		printf("\n\nTotal fields in $dbRecords = %u\n",unqlite_array_count(pObject));
-        unqlite_array_walk(pObject, JsonArrayWalker, (__bridge void*)_objects);
+        //unqlite_array_walk(pObject, JsonArrayWalker, (__bridge void*)_objects);
     }
+    
+	/* Release our VM */
+	unqlite_vm_release(pVm);
+	
+	/* Auto-commit the transaction and close our database */
+	unqlite_close(pDb);
+	return 0;
+}
+
+-(int) dropPersonFromDb:(Person *)person fromDbAtPath:(NSString*)dbPath
+{
+    if(person == nil || dbPath==nil){
+        return -1;
+    }
+	unqlite_value *pScalar,*pObject; /* Foreign Jx9 variable to be installed later */
+	unqlite *pDb;       /* Database handle */
+	unqlite_vm *pVm;    /* UnQLite VM resulting from successful compilation of the target Jx9 script */
+	int rc;
+    
+	/* Open our database */
+	rc = unqlite_open(&pDb,[dbPath cStringUsingEncoding:NSASCIIStringEncoding],UNQLITE_OPEN_CREATE);
+	if( rc != UNQLITE_OK ){
+		Fatal(0,"Out of memory");
+	}
+	
+	/* Compile our Jx9 script defined above */
+	rc = unqlite_compile(pDb,JX9_PROG_DROPPERSON,sizeof(JX9_PROG_DROPPERSON)-1,&pVm);
+	if( rc != UNQLITE_OK ){
+		/* Compile error, extract the compiler error log */
+		const char *zBuf;
+		int iLen;
+		/* Extract error log */
+		unqlite_config(pDb,UNQLITE_CONFIG_JX9_ERR_LOG,&zBuf,&iLen);
+		if( iLen > 0 ){
+			puts(zBuf);
+		}
+		Fatal(0,"Jx9 compile error");
+	}
+    
+	/* Install a VM output consumer callback */
+	rc = unqlite_vm_config(pVm,UNQLITE_VM_CONFIG_OUTPUT,VmOutputConsumer,0);
+	if( rc != UNQLITE_OK ){
+		Fatal(pDb,0);
+	}
+	
+	/*
+	 * Create a simple scalar variable.
+	 */
+	pScalar = unqlite_vm_new_scalar(pVm);
+	if( pScalar == 0 ){
+		Fatal(0,"Cannot create foreign variable $my_app");
+	}
+
+	pObject = unqlite_vm_new_array(pVm); /* Unified interface for JSON Objects and Arrays */
+	/* Populate the object with the fields defined above.
+     */
+	unqlite_value_reset_string_cursor(pScalar);
+	
+	/* Add the "firstName" */
+	unqlite_value_string(pScalar,[person.firstName cStringUsingEncoding:NSASCIIStringEncoding],-1);
+	unqlite_array_add_strkey_elem(pObject,"firstName",pScalar); /* Will make it's own copy of pScalar */
+    
+    unqlite_value_reset_string_cursor(pScalar);
+    
+    /* Add the "lastName" */
+	unqlite_value_string(pScalar,[person.lastName cStringUsingEncoding:NSASCIIStringEncoding],-1);
+	unqlite_array_add_strkey_elem(pObject,"lastName",pScalar); /* Will make it's own copy of pScalar */
+    
+    unqlite_value_reset_string_cursor(pScalar);
+    
+    /* Add the "phone" */
+	unqlite_value_string(pScalar,[person.phoneNumber cStringUsingEncoding:NSASCIIStringEncoding],-1);
+	unqlite_array_add_strkey_elem(pObject,"phone",pScalar); /* Will make it's own copy of pScalar */
+    
+    unqlite_value_reset_string_cursor(pScalar);
+    
+    /* Add the "organization" */
+	unqlite_value_string(pScalar,[person.organization cStringUsingEncoding:NSASCIIStringEncoding],-1);
+	unqlite_array_add_strkey_elem(pObject,"organization",pScalar); /* Will make it's own copy of pScalar */
+    
+    unqlite_value_reset_string_cursor(pScalar);
+    
+    unqlite_value_int64(pScalar, person.personId);
+    unqlite_array_add_strkey_elem(pObject, "id", pScalar);
+	
+	/* Now, install the variable and associate the JSON object with it */
+	rc = unqlite_vm_config(
+                           pVm,
+                           UNQLITE_VM_CONFIG_CREATE_VAR, /* Create variable command */
+                           "drop_person", /* Variable name (without the dollar sign) */
+                           pObject    /*value */
+                           );
+	if( rc != UNQLITE_OK ){
+		Fatal(0,"Error while installing $new_person");
+	}
+    
+	/* Release the two values */
+	unqlite_vm_release_value(pVm,pScalar);
+	unqlite_vm_release_value(pVm,pObject);
+    
+	/* Execute our script */
+	unqlite_vm_exec(pVm);
     
 	/* Release our VM */
 	unqlite_vm_release(pVm);
@@ -399,8 +350,8 @@ static Person* personFromDbObject(unqlite_value* pObject){
                             addPerson.organization = organization;
                             addPerson.personId = personId;
                             return addPerson;
-                            }
                         }
+                    }
                 }
             }
         }
@@ -408,20 +359,20 @@ static Person* personFromDbObject(unqlite_value* pObject){
     return nil;
 }
 
-int fillObjects(unqlite_context *pCtx, int argc, unqlite_value **argv)
-{
-    //printf("Number of Arguments : %d",argc);
-    if (argc>0) {
-        unqlite_value* value = argv[0];
-        if(value!=0){
-            Person* person = personFromDbObject(value);
-            if(person!=nil){
-                NSLog(@"%@ %@",person.firstName,person.lastName);
-            }
-        }
-    }
-    return UNQLITE_OK;
-}
+//int fillObjects(unqlite_context *pCtx, int argc, unqlite_value **argv)
+//{
+//    //printf("Number of Arguments : %d",argc);
+//    if (argc>0) {
+//        unqlite_value* value = argv[0];
+//        if(value!=0){
+//            Person* person = personFromDbObject(value);
+//            if(person!=nil){
+//                NSLog(@"%@ %@",person.firstName,person.lastName);
+//            }
+//        }
+//    }
+//    return UNQLITE_OK;
+//}
 
 -(int) fetchAllPersonsFromDb:(NSString*)dbPath
 {
@@ -459,11 +410,11 @@ int fillObjects(unqlite_context *pCtx, int argc, unqlite_value **argv)
 		Fatal(pDb,0);
 	}
     
-    rc = unqlite_create_function(pVm
-                                 , "fillObjects", fillObjects, 0);
-	if( rc != UNQLITE_OK ){
-		Fatal(pDb,0);
-	}
+//    rc = unqlite_create_function(pVm
+//                                 , "fillObjects", fillObjects, 0);
+//	if( rc != UNQLITE_OK ){
+//		Fatal(pDb,0);
+//	}
     
 	/* Execute our script */
 	unqlite_vm_exec(pVm);
@@ -481,7 +432,8 @@ int fillObjects(unqlite_context *pCtx, int argc, unqlite_value **argv)
         /* Iterate over object fields */
         [_objects removeAllObjects];
 		printf("\n\nTotal fields in $dbRecords = %u\n",unqlite_array_count(pObject));
-        unqlite_array_walk(pObject, JsonPersonArrayWalker,0);
+        void* pUserData = (__bridge void*)(_objects);
+        unqlite_array_walk(pObject, JsonPersonArrayWalker,pUserData);
     }
     
 	/* Release our VM */
@@ -569,8 +521,15 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
         else{
             [self createDatabase:_dbPath];
         }
+        
+        if (!_objects) {
+            _objects = [[NSMutableArray alloc] init];
+        }
+        
         [self fetchAllPersonsFromDb:_dbPath];
-        //testJx9();
+        
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+        [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
     }
 }
 
@@ -698,8 +657,13 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
-        [_objects removeObjectAtIndex:indexPath.row];
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        Person* person = _objects[indexPath.row];
+        if(person != nil){
+            if([self dropPersonFromDb:person fromDbAtPath:_dbPath] == UNQLITE_OK){
+                [_objects removeObjectAtIndex:indexPath.row];
+                [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+            }
+        }
     } else if (editingStyle == UITableViewCellEditingStyleInsert) {
         // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view.
     }

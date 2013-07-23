@@ -27,6 +27,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5B1CE6DF179ECA500016593E /* Jx9Macros.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Jx9Macros.h; path = ../Jx9Macros.h; sourceTree = "<group>"; };
 		5B226CEC178D8D5200F48E8A /* license.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = license.txt; sourceTree = "<group>"; };
 		5B226CED178D8D5200F48E8A /* unqlite.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = unqlite.c; sourceTree = "<group>"; };
 		5B226CEE178D8D5200F48E8A /* unqlite.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = unqlite.h; sourceTree = "<group>"; };
@@ -124,6 +125,7 @@
 				5B53D29F178C444B00C36782 /* AddViewController.m */,
 				5BDE36141780264900E33BE8 /* EditViewController.h */,
 				5BDE36151780264900E33BE8 /* EditViewController.m */,
+				5B1CE6DF179ECA500016593E /* Jx9Macros.h */,
 				5B745D45177DC2E000142409 /* Supporting Files */,
 				5B745D67177DC56A00142409 /* Person.h */,
 				5B745D68177DC56A00142409 /* Person.m */,
