@@ -12,7 +12,6 @@
 #import "DetailViewController.h"
 #import "Person.h"
 #import "unqlite.h"
-#import <string.h>
 #import "Jx9Macros.h"
 
 
@@ -444,52 +443,6 @@ static Person* personFromDbObject(unqlite_value* pObject){
 	return 0;
 }
 
-
-#ifdef __WINNT__
-#include <Windows.h>
-#else
-/* Assume UNIX */
-#include <unistd.h>
-#endif
-/*
- * The following define is used by the UNIX build process and have
- * no particular meaning on windows.
- */
-#ifndef STDOUT_FILENO
-#define STDOUT_FILENO	1
-#endif
-/*
- * VM output consumer callback.
- * Each time the UnQLite VM generates some outputs, the following
- * function gets called by the underlying virtual machine to consume
- * the generated output.
- *
- * All this function does is redirecting the VM output to STDOUT.
- * This function is registered via a call to [unqlite_vm_config()]
- * with a configuration verb set to: UNQLITE_VM_CONFIG_OUTPUT.
- */
-static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUserData /* Unused */)
-{
-#ifdef __WINNT__
-	BOOL rc;
-	rc = WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),pOutput,(DWORD)nOutLen,0,0);
-	if( !rc ){
-		/* Abort processing */
-		return UNQLITE_ABORT;
-	}
-#else
-	ssize_t nWr;
-	nWr = write(STDOUT_FILENO,pOutput,nOutLen);
-	if( nWr < 0 ){
-		/* Abort processing */
-		return UNQLITE_ABORT;
-	}
-#endif /* __WINT__ */
-	
-	/* All done, data was redirected to STDOUT */
-	return UNQLITE_OK;
-}
-
 - (void)awakeFromNib
 {
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
@@ -683,6 +636,7 @@ static int VmOutputConsumer(const void *pOutput,unsigned int nOutLen,void *pUser
         NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
         Person *person = _objects[indexPath.row];
         [[segue destinationViewController] setDetailItem:person];
+        [[segue destinationViewController] setDbPath:_dbPath];
     }else if([[segue identifier] isEqualToString:@"addDetail"]){
         NSLog(@"Add Detail Segue");
     }

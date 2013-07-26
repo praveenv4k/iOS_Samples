@@ -11,6 +11,7 @@
 @interface DetailViewController : UITableViewController
 
 @property (strong, nonatomic) id detailItem;
+@property (strong,nonatomic) NSString* dbPath;
 @property (weak, nonatomic) IBOutlet UILabel *nameLabel; @property (weak, nonatomic) IBOutlet UILabel *organizationLabel;
 @property (weak, nonatomic) IBOutlet UILabel *phoneNumberLabel;
 
